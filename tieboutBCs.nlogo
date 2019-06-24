@@ -10,7 +10,7 @@
 
 extensions [ rnd ]
 
-turtles-own [mygroup my-position vote-prob]
+turtles-own [mygroup my-position]
 
 breed [groups group]
 breed [allcs allc]
@@ -30,6 +30,7 @@ to setup
   assign-groups-institution
   label-group-w-party-count
   populate-groups
+  populate-parties
   reset-ticks
 end
 
@@ -204,8 +205,105 @@ to populate-group [radius n x_cors y_cors mygr]
 
     ; set the position for each turtle in a group to unifor between [-1,1] this could be done globally, but for speed of coding...!
     set my-position random-float 2 - 1
-    set vote-prob 1 / sqrt group-count
+;    set vote-prob 1 / sqrt group-count
     set color grey
+;    if my-position > 0 [set color yellow]
+;    if my-position < 0 [set color blue]
+    ;; this is the hackiest single band-aid which should do fine for the amount of batch runs we are trying to do, but perhaps put one more level of manual recursion to force it if its an issue.
+    if my-position = 0 [set my-position random-float 2 - 1 ]
+
+
+
+  ]
+end
+
+
+
+
+;; these procedures are for creating the psrties, placing, and initing them with coin values
+to populate-parties
+  ; order the list of groups for easy processing
+  ; remove from globals - keep this local
+  set ordered-groups sort-on [who] turtles
+
+  ; convert the ordered list to an agentset
+  set ordered-groups-set turtles with [member? self ordered-groups]
+
+  ;set ordered-groups-set sort-on [whoc ordered-groups-set
+  ; create a list of all the xy cors for each group location
+  ; there is too much redundency in lists here
+  set groupxys [ (list who xcor ycor) ] of ordered-groups-set with [who < rows * columns]
+;  foreach
+  ;set groupxys2
+  ;let mygr 0
+  ;show ordered-groups
+  ;show groupxys
+  ;let group-num 0
+  ;let i 0
+  foreach groupxys [
+    [ xy_coords ] ->
+    ;; assuming that we always populate groups in serial order like we did in assign-groups-institution we can just use if statments to make sure we are addressing the correct groups with the right party counts.
+    let temp-count 0
+    let i item 0 xy_coords
+    if i < olig-count
+    [
+      ;show "olig test in loop"
+      ;show xy_coords
+      ;show olig-party-count
+      ;ask turtles with [who = i] [set color red]
+      set temp-count olig-party-count
+      ;set i i + 1
+    ]
+
+    if i >= olig-count and i < demref-count + olig-count
+    [
+      ;;ask turtles with [who = i] [set color blue]
+      set temp-count demref-party-count
+      ;set i i + 1
+    ]
+    if i >= demref-count + olig-count and i < dircomp-count + demref-count + olig-count
+    [
+      set temp-count dircomp-party-count
+      ;set i i + 1
+    ]
+    if i >= dircomp-count + demref-count + olig-count ; dont think i need this condition --- and i < dircomp-count + demref-count + olig-count
+    [
+      set temp-count proprep-party-count
+      ;set i i + 1
+    ]
+    ;show "temp count right before populate"
+    ;show temp-count
+
+    populate-party party-radius temp-count item 1 xy_coords item 2 xy_coords item 0 xy_coords
+    ;mygr
+    ;set group-num group-num + 1
+    set temp-count temp-count + 1
+  ]
+end
+
+to populate-party [radius n x_cors y_cors mygr]
+  ;layout-circle turtles 10
+  ;; turtles should be evenly spaced around the circle
+
+;  ask turtles with [color = red] [set label olig-party-count]
+;  ask turtles with [color = blue] [set label demref-party-count]
+;  ask turtles with [color = yellow] [set label dircomp-party-count]
+;  ask turtles with [color = magenta] [set label proprep-party-count]
+;
+;
+
+  create-ordered-turtles n [
+
+    set size 0.6  ;; easier to see
+    set mygroup mygr ;; brand turtle with group label
+    setxy x_cors y_cors ;; position at group location
+    fd radius
+    rt 90
+
+    ; set the position for each turtle in a group to unifor between [-1,1] this could be done globally, but for speed of coding...!
+    set my-position random-float 2 - 1
+;    set vote-prob 1 / sqrt group-count
+    set color black
 ;    if my-position > 0 [set color yellow]
 ;    if my-position < 0 [set color blue]
     ;; this is the hackiest single band-aid which should do fine for the amount of batch runs we are trying to do, but perhaps put one more level of manual recursion to force it if its an issue.
@@ -252,7 +350,7 @@ rows
 rows
 1
 10
-4.0
+3.0
 1
 1
 NIL
@@ -267,7 +365,7 @@ columns
 columns
 1
 10
-4.0
+3.0
 1
 1
 NIL
@@ -416,7 +514,7 @@ group-count
 group-count
 1
 50
-50.0
+25.0
 1
 1
 NIL
@@ -568,7 +666,7 @@ olig-party-count
 olig-party-count
 1
 5
-5.0
+4.0
 1
 1
 NIL
@@ -583,7 +681,7 @@ demref-party-count
 demref-party-count
 0
 5
-5.0
+1.0
 1
 1
 NIL
@@ -598,7 +696,7 @@ dircomp-party-count
 dircomp-party-count
 0
 5
-1.0
+5.0
 1
 1
 NIL
@@ -638,7 +736,7 @@ olig-count
 olig-count
 0
 rows * columns - demref-count - dircomp-count - proprep-count
-15.0
+2.0
 1
 1
 NIL
@@ -668,7 +766,7 @@ dircomp-count
 dircomp-count
 0
 rows * columns - olig-count - demref-count - proprep-count
-0.0
+6.0
 1
 1
 NIL
@@ -709,6 +807,21 @@ columns * rows * group-count
 0
 1
 11
+
+SLIDER
+18
+120
+141
+153
+party-radius
+party-radius
+-1
+1
+-0.6
+.2
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
