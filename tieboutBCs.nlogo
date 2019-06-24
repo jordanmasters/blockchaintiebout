@@ -13,9 +13,9 @@ extensions [ rnd ]
 turtles-own [mygroup my-position]
 
 breed [groups group]
-breed [allcs allc]
-breed [allds alld]
-breed [rcs rc]
+;breed [allcs allc]
+;breed [allds alld]
+;breed [rcs rc]
 
 globals [groupxys ordered-groups ordered-groups-set types popular-vote global-vote groups-positions]
 
@@ -28,7 +28,7 @@ to setup
 
   decentralized-heirarchical-split ;; hardcode this so we done need to see it in the interface
   assign-groups-institution
-  label-group-w-party-count
+  ;label-group-w-party-count
   populate-groups
   populate-parties
   reset-ticks
@@ -45,12 +45,12 @@ to go
   tick
 end
 
-to label-group-w-party-count
-  ask turtles with [color = red] [set label olig-party-count]
-  ask turtles with [color = blue] [set label demref-party-count]
-  ask turtles with [color = yellow] [set label dircomp-party-count]
-  ask turtles with [color = magenta] [set label proprep-party-count]
-end
+;to label-group-w-party-count
+;  ask turtles with [color = red] [set label olig-party-count]
+;  ask turtles with [color = blue] [set label demref-party-count]
+;  ask turtles with [color = yellow] [set label dircomp-party-count]
+;  ask turtles with [color = magenta] [set label proprep-party-count]
+;end
 
 
 ;to draw-votere
@@ -299,9 +299,15 @@ to populate-party [radius n x_cors y_cors mygr]
     setxy x_cors y_cors ;; position at group location
     fd radius
     rt 90
+    set my-position []
+    let i 0
+    while [i < issues] [
+      set my-position lput one-of [1 0] my-position
+      set i i + 1
+    ]
 
     ; set the position for each turtle in a group to unifor between [-1,1] this could be done globally, but for speed of coding...!
-    set my-position random-float 2 - 1
+    ;set my-position random-float 2 - 1
 ;    set vote-prob 1 / sqrt group-count
     set color black
 ;    if my-position > 0 [set color yellow]
@@ -343,9 +349,9 @@ ticks
 
 SLIDER
 147
-194
+197
 265
-227
+230
 rows
 rows
 1
@@ -357,9 +363,9 @@ NIL
 HORIZONTAL
 
 SLIDER
-148
+147
 157
-266
+265
 190
 columns
 columns
@@ -666,7 +672,7 @@ olig-party-count
 olig-party-count
 1
 5
-4.0
+3.0
 1
 1
 NIL
@@ -681,7 +687,7 @@ demref-party-count
 demref-party-count
 0
 5
-1.0
+2.0
 1
 1
 NIL
@@ -696,7 +702,7 @@ dircomp-party-count
 dircomp-party-count
 0
 5
-5.0
+2.0
 1
 1
 NIL
@@ -711,7 +717,7 @@ proprep-party-count
 proprep-party-count
 0
 5
-1.0
+5.0
 1
 1
 NIL
@@ -736,7 +742,7 @@ olig-count
 olig-count
 0
 rows * columns - demref-count - dircomp-count - proprep-count
-2.0
+1.0
 1
 1
 NIL
@@ -751,7 +757,7 @@ demref-count
 demref-count
 0
 rows * columns - olig-count - dircomp-count - proprep-count
-1.0
+2.0
 1
 1
 NIL
@@ -766,7 +772,7 @@ dircomp-count
 dircomp-count
 0
 rows * columns - olig-count - demref-count - proprep-count
-6.0
+3.0
 1
 1
 NIL
@@ -781,7 +787,7 @@ proprep-count
 proprep-count
 0
 rows * columns - olig-count - demref-count - dircomp-count
-0.0
+3.0
 1
 1
 NIL
@@ -819,6 +825,21 @@ party-radius
 1
 -0.6
 .2
+1
+NIL
+HORIZONTAL
+
+SLIDER
+427
+409
+599
+442
+issues
+issues
+1
+10
+7.0
+1
 1
 NIL
 HORIZONTAL
