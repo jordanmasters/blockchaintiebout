@@ -17,7 +17,7 @@ breed [groups group]
 ;breed [allds alld]
 ;breed [rcs rc]
 
-globals [groupxys ordered-groups ordered-groups-set types popular-vote global-vote groups-positions]
+globals [groupxys ordered-groups ordered-groups-set types popular-vote global-vote groups-positions a-pos a-pos-new]
 
 
 to setup
@@ -39,10 +39,70 @@ to go
   ; calc-popular-vote ;(single)
   ; calc-group-votes ;(vector)
   ; calc-global-vote ;(single)
-  calc-group-vote
-  calc-popular-vote
+
+  ; on first go, let each inst arrganement voting protocol choose between the available parties in a group
+  ;
+  ;
+  ; for each jusisdiction,
+  ; for each turtle in each jurisdiction
+  ; check its position against all parties
+  ;calculate-citizen-party-distance
+  ; vote-in-jurisdiction
+  ; switch-jurisdictions
+  ;   check-if-grass-is-greener
+  ;   move-to-greener-grass
+  ; mutate non-incumbent parties
+  ;calc-group-vote
+  ;calc-popular-vote
 ;  die-birth
   tick
+end
+
+to pick-a-party ; vote on and select the winning party in a jurisdiction based on inst arrangement
+    ; given a jurisdiction, select (from TODO label) all the parties
+    ; set party-scores up a [[ to hold total scores for all parties
+    ; loop through the parties
+    ;   set up x for this party
+    ;   loop through each agent in the jurisdiction
+    ;     cum sum them
+    ;   lput array into party-scores
+    ;
+    ; parties have to have a bool? of incumbent
+    ; set bool 1 to winner, losers 0
+    ; coun tmutate non-incumbents here for comp efficientcy....
+end
+
+; could use first observed higher value or max after scanning all
+to check-if-grass-is-greener
+  ; for each agent, loop through all incumbent positions and make a list of the compared values
+  ; take the index of the highest value and move (die->ressurect) the agent to that group
+  ;
+
+
+end
+
+to mutate-non-incumbents
+  ; run this after all pick-a-party loops have run
+  ; loop through all jurisdictions,
+  ;   loop through all parties and if they are not incumbent, do one mutation to them
+
+end
+
+to-report mutate-position [a-position]
+  let len length a-position
+  show "len"
+  show len
+  let rng range len
+  show "rng"
+  show rng
+  let loci one-of rng
+  show "loci"
+  show loci
+  ; do the flipping
+  ifelse item loci a-position = 0 [set a-position replace-item loci a-position 1] [set a-position replace-item loci a-position 0]
+
+  report a-position
+
 end
 
 ;to label-group-w-party-count
@@ -202,9 +262,14 @@ to populate-group [radius n x_cors y_cors mygr]
     setxy x_cors y_cors ;; position at group location
     fd radius
     rt 90
-
+    set my-position []
+    let i 0
+    while [i < issues] [
+      set my-position lput one-of [1 0] my-position
+      set i i + 1
+    ]
     ; set the position for each turtle in a group to unifor between [-1,1] this could be done globally, but for speed of coding...!
-    set my-position random-float 2 - 1
+    ;set my-position random-float 2 - 1
 ;    set vote-prob 1 / sqrt group-count
     set color grey
 ;    if my-position > 0 [set color yellow]
@@ -281,6 +346,27 @@ to populate-parties
   ]
 end
 
+
+; this is a super simple version of the situation
+; ideally use the economist formula: -(distance^2)
+; since we only have binary values, all we have to do here is check if each corresponding entry is identical, if not, they are different and add one to the distance
+to-report calculate-citizen-party-distance [cit-pos party-pos]
+  show "running calculate-citizen-party-distance"
+  let len length cit-pos
+  let i 0
+;  let diff 0
+;  while [i < len]
+;  [
+;    if item i cit-pos = item i party-pos
+;    set diff diff + 1
+;  ]
+;  show diff
+;  report diff
+end
+
+
+
+
 to populate-party [radius n x_cors y_cors mygr]
   ;layout-circle turtles 10
   ;; turtles should be evenly spaced around the circle
@@ -356,7 +442,7 @@ rows
 rows
 1
 10
-3.0
+2.0
 1
 1
 NIL
@@ -371,7 +457,7 @@ columns
 columns
 1
 10
-3.0
+2.0
 1
 1
 NIL
@@ -702,7 +788,7 @@ dircomp-party-count
 dircomp-party-count
 0
 5
-2.0
+3.0
 1
 1
 NIL
@@ -742,7 +828,7 @@ olig-count
 olig-count
 0
 rows * columns - demref-count - dircomp-count - proprep-count
-1.0
+2.0
 1
 1
 NIL
@@ -772,7 +858,7 @@ dircomp-count
 dircomp-count
 0
 rows * columns - olig-count - demref-count - proprep-count
-3.0
+2.0
 1
 1
 NIL
@@ -787,7 +873,7 @@ proprep-count
 proprep-count
 0
 rows * columns - olig-count - demref-count - dircomp-count
-3.0
+0.0
 1
 1
 NIL
@@ -830,15 +916,15 @@ NIL
 HORIZONTAL
 
 SLIDER
-427
-409
-599
-442
+423
+406
+595
+439
 issues
 issues
 1
 10
-7.0
+10.0
 1
 1
 NIL
