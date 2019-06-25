@@ -1,13 +1,3 @@
-;; Random notes
-
-;; Issue 1
-;; would like create-ordered-list from inside turtle ask, but not possible so using
-;; foreach groupxys procedure instead - possible solution is to avoid foreach, use ask, but make custom hatch function with spacially ordered turtles to be axecutable from inside ask
-;; goal was to make turtles have same ID as their group - solved by adding group index to temp groupxys list
-
-;; Issue 2
-;;
-
 extensions [ rnd ]
 
 
@@ -18,33 +8,24 @@ breed [parties party]
 turtles-own [mygroup my-position dictator]
 parties-own [incumbent]
 
-;breed [allds alld]
-;breed [rcs rc]
-
 globals [groupxys ordered-groups ordered-groups-set types popular-vote global-vote groups-positions a-pos a-pos-new]
 
 
 to setup
   clear-all
-  ; set background color
   ask patches [set pcolor 63]
   make-groups
 
   decentralized-heirarchical-split ;; hardcode this so we done need to see it in the interface
   assign-groups-institution
-  ;label-group-w-party-count
   populate-groups
   populate-parties
   assign-dictators
+
   reset-ticks
 end
 
 to go
-  ; draw-voters
-  ; calc-popular-vote ;(single)
-  ; calc-group-votes ;(vector)
-  ; calc-global-vote ;(single)
-
   ; on first go, let each inst arrganement voting protocol choose between the available parties in a group
   ;
   ;
@@ -64,8 +45,9 @@ to go
 
   ;calc-group-vote
   ;calc-popular-vote
-;  die-birth
+  ;die-birth
   pick-a-party
+  mutate-non-incumbents
   tick
 end
 
@@ -73,8 +55,8 @@ to assign-dictators
   let i 0
   while [i < olig-count]
   [
-    show i
-    ask one-of turtles with [mygroup = i and breed != groups and breed != parties] [set dictator 1 show "setting it"]
+    ;show i
+    ask one-of turtles with [mygroup = i and breed != groups and breed != parties] [set dictator 1]
     set i i + 1
   ]
 end
@@ -95,7 +77,9 @@ to pick-a-party ; vote on and select the winning party in a jurisdiction based o
   let i 0
   while [i < rows * columns]
   [
-    show "Jurisdiction"
+    ;; each high level inner while loop here is executing part of the above while loop and jumping ahead...
+
+
     ; for each party in each jurisdiction for a given inst arrangement
 
     ; ok we have to cum join all the iter limits here cause of fixed group ordering
@@ -106,8 +90,10 @@ to pick-a-party ; vote on and select the winning party in a jurisdiction based o
     ; pick the closest
     let j 0
     let selected-party []
+    ; Run through oligarch jurisdictions
     while [i < olig-count]
     [
+      show "Oligarch Jurisdiction"
       ; check the dictator position against all the parties
       ; the one with the lowest difference should be set to incumbent 1
       ;ask turtles with [mygroup = i and ]
@@ -120,28 +106,77 @@ to pick-a-party ; vote on and select the winning party in a jurisdiction based o
       let dists-whos []
       ask turtles with [mygroup = i and breed = parties] [set dists lput calculate-citizen-party-distance my-position dict-pos dists set dists-whos lput who dists-whos]
       ;calculate-citizen-party-distance turtles with [mygroup = i and dictator = 1] turtles with
-      show dists
-      show dists-whos
-      set i i + 1
+      ;show dists
+      ;show dists-whos
+
       let temp-len length dists
       let ii 0
       let minval min dists
+      ; Run through parties in jurisdiction
       while [ii < temp-len]
       [
-        if item ii dists = minval [show item ii dists-whos]
+        ; we need a tiebreaking procedure... otherwise we get multi dictators in a group on ties
+        ; did it with one-of - did not work....
+        ;  could build this into the setting of the if statement, jump to last ii on completing, why doesn't netlogo have "break"?
+        ; in effect this selects the first of the tiebreak options
+        if item ii dists = minval [ask parties with [who = item ii dists-whos] [show minval set incumbent 1 set ii temp-len]]
         set ii ii + 1
       ]
+      set i i + 1
+      ;;
     ]
 
     ; DEMREF
     ; Each agent votes for the party that gives her the highest utility.
-    ; median of votes - this assumes only 2 parties......tell me im wrong....
-    ;
-    ;let j 0
-    while [i <= olig-count + demref-count]
+    ; median of votes - this assumes only 2 parties......tell me im wrong.... it has to if reasonably based on median...
+
+
+    ; Run through demref jurisdictions
+    while [i < olig-count + demref-count]
     [
-      ; run through all agents in the group and compare them to the party
+      show "Dem Ref Jurisdiciton"
+      ; run through all agents in the group and compare them to one of the two parties
       ; keep a running tally
+;      let dists []
+      let dists-whos []
+      let dists-scores []
+      let party-who-votes []
+      ; highest level loop should be based on citzens in group since we want their votes
+      ask turtles with [mygroup = i and breed != parties] [
+        ;; loop through parties in a jurisdiction
+        let cit-pos my-position
+        let parties-whos []
+        let dists []
+        ask turtles with [mygroup = i and breed = parties] [
+          set parties-whos lput who parties-whos
+          set dists lput calculate-citizen-party-distance my-position cit-pos dists
+          ;show "cit vs party"
+          ;show cit-pos
+          ;show my-position
+        ]
+        let min-dist min dists
+        let k 0
+        while [k < length dists][
+          if item k dists = min-dist [set party-who-votes lput item k parties-whos party-who-votes set k length dists]
+          set k k + 1
+        ]
+        ;show parties-whos
+        ;show dists
+        ;show party-who-votes
+;        while [ii < demref-parties-count] [
+;          show calculate-citizen-party-distance my-position dict-pos
+;          show calculate-citizen-party-distance my-position dict-pos
+;        ]
+      ]
+      show one-of modes party-who-votes
+
+
+
+
+
+      ;show dists
+      ;show dists-whos
+
       set i i + 1
     ]
 
@@ -156,7 +191,6 @@ to pick-a-party ; vote on and select the winning party in a jurisdiction based o
       set i i + 1
     ]
 
-        ;
     ; PROPREP - Do this tomorrow, fuck it!  not need for finishing and running poc sims & analysis...
     ; This seems like....
     ; Each agent votes for the party that gives her the highest utility.
@@ -170,16 +204,19 @@ end
 to check-if-grass-is-greener
   ; for each agent, loop through all incumbent positions and make a list of the compared values
   ; take the index of the highest value and move (die->ressurect) the agent to that group
-  ;
-
-
 end
 
 to mutate-non-incumbents
   ; run this after all pick-a-party loops have run
   ; loop through all jurisdictions,
   ;   loop through all parties and if they are not incumbent, do one mutation to them
+  let i 0
+  while [i < rows * columns]
+  [
+    ask parties with [mygroup = i and incumbent = 0] [show "mutated-non-incumbent"]
+    set i i + 1
 
+  ]
 end
 
 
@@ -201,56 +238,9 @@ to-report mutate-position [a-position]
 
 end
 
-;to label-group-w-party-count
-;  ask turtles with [color = red] [set label olig-party-count]
-;  ask turtles with [color = blue] [set label demref-party-count]
-;  ask turtles with [color = yellow] [set label dircomp-party-count]
-;  ask turtles with [color = magenta] [set label proprep-party-count]
-;end
-
-
 to calc-popular-vote
   set popular-vote (sum [my-position] of turtles) / (count turtles - (rows * columns))
 end
-
-;to calc-group-vote
-;  set groups-positions []
-;  let m rows * columns
-;  let m-list range m
-;  foreach m-list
-;  [ group-num -> set groups-positions [my-position] of turtles with [mygroup = group-num];show (word x " -> " round x)
-;    ;sum [my-position] of turtles with [mygroup = group-num]
-;  ]
-;;  show groups-positions
-;  set global-vote sum groups-positions / m
-;
-;
-;  ;set my-list fput something my-list
-;end
-
-;to die-birth
-;  ask turtles with [who > rows * columns]
-;  [
-;    if random-float 1 > prob-die [
-;
-;      hatch 1 [
-;        ; dry thid all
-;        set my-position random-float 2 - 1
-;        set vote-prob 1 / sqrt group-count
-;        if my-position > 0 [set color yellow]
-;        if my-position < 0 [set color blue]
-;        ;; this is the hackiest single band-aid which should do fine for the amount of batch runs we are trying to do, but perhaps put one more level of manual recursion to force it if its an issue.
-;        if my-position = 0 [set my-position random-float 2 - 1 ]
-;      ]
-;      die
-;    ]
-;
-;  ]
-;
-;end
-
-
-
 
 to make-groups
   set-default-shape turtles "circle"
@@ -281,7 +271,6 @@ to arrange-groups
 end
 
 to assign-groups-institution ; this should also assign them with some other label is nessecary - we might just use color for all inst labels.
-
   let i 0
   while [i < olig-count]
     [
@@ -305,7 +294,6 @@ to assign-groups-institution ; this should also assign them with some other labe
     ]
 
 end
-
 
 ;; hide this later
 to decentralized-heirarchical-split
@@ -463,14 +451,6 @@ end
 to populate-party [radius n x_cors y_cors mygr]
   ;layout-circle turtles 10
   ;; turtles should be evenly spaced around the circle
-
-;  ask turtles with [color = red] [set label olig-party-count]
-;  ask turtles with [color = blue] [set label demref-party-count]
-;  ask turtles with [color = yellow] [set label dircomp-party-count]
-;  ask turtles with [color = magenta] [set label proprep-party-count]
-;
-;
-
   create-ordered-parties n [
 
     set size 0.6  ;; easier to see
@@ -485,15 +465,7 @@ to populate-party [radius n x_cors y_cors mygr]
       set my-position lput one-of [1 0] my-position
       set i i + 1
     ]
-
-
-    ;set my-position random-float 2 - 1
-;    set vote-prob 1 / sqrt group-count
     set color black
-;    if my-position > 0 [set color yellow]
-;    if my-position < 0 [set color blue]
-    ;; this is the hackiest single band-aid which should do fine for the amount of batch runs we are trying to do, but perhaps put one more level of manual recursion to force it if its an issue.
-    if my-position = 0 [set my-position random-float 2 - 1 ]
 
 
 
@@ -536,7 +508,7 @@ rows
 rows
 1
 10
-2.0
+3.0
 1
 1
 NIL
@@ -700,7 +672,7 @@ group-count
 group-count
 1
 50
-6.0
+4.0
 1
 1
 NIL
@@ -715,7 +687,7 @@ group-radius
 group-radius
 -1
 3
-2.0
+1.5
 0.5
 1
 NIL
@@ -865,9 +837,9 @@ SLIDER
 308
 demref-party-count
 demref-party-count
-0
-5
-5.0
+2
+2
+3.0
 1
 1
 NIL
@@ -882,7 +854,7 @@ dircomp-party-count
 dircomp-party-count
 0
 5
-3.0
+5.0
 1
 1
 NIL
@@ -937,7 +909,7 @@ demref-count
 demref-count
 0
 rows * columns - olig-count - dircomp-count - proprep-count
-1.0
+3.0
 1
 1
 NIL
@@ -1018,7 +990,7 @@ issues
 issues
 1
 20
-20.0
+7.0
 1
 1
 NIL
