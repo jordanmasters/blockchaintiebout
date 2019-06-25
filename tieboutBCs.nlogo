@@ -116,9 +116,21 @@ to pick-a-party ; vote on and select the winning party in a jurisdiction based o
       ask turtles with [mygroup = i and dictator = 1] [set dict-pos my-position]
       ;lput this instead of show - to list
       show dict-pos
-      ask turtles with [mygroup = i and breed = parties] [show calculate-citizen-party-distance my-position dict-pos]
+      let dists []
+      let dists-whos []
+      ask turtles with [mygroup = i and breed = parties] [set dists lput calculate-citizen-party-distance my-position dict-pos dists set dists-whos lput who dists-whos]
       ;calculate-citizen-party-distance turtles with [mygroup = i and dictator = 1] turtles with
+      show dists
+      show dists-whos
       set i i + 1
+      let temp-len length dists
+      let ii 0
+      let minval min dists
+      while [ii < temp-len]
+      [
+        if item ii dists = minval [show item ii dists-whos]
+        set ii ii + 1
+      ]
     ]
 
     ; DEMREF
@@ -430,7 +442,7 @@ end
 ; ideally use the economist formula: -(distance^2)
 ; since we only have binary values, all we have to do here is check if each corresponding entry is identical, if not, they are different and add one to the distance
 to-report calculate-citizen-party-distance [cit-pos party-pos]
-  show "running calculate-citizen-party-distance"
+  ;show "running calculate-citizen-party-distance"
   let len length cit-pos
   let i 0
   let diff 0
@@ -688,7 +700,7 @@ group-count
 group-count
 1
 50
-5.0
+6.0
 1
 1
 NIL
@@ -910,7 +922,7 @@ olig-count
 olig-count
 0
 rows * columns - demref-count - dircomp-count - proprep-count
-2.0
+3.0
 1
 1
 NIL
@@ -940,7 +952,7 @@ dircomp-count
 dircomp-count
 0
 rows * columns - olig-count - demref-count - proprep-count
-1.0
+0.0
 1
 1
 NIL
@@ -1005,8 +1017,8 @@ SLIDER
 issues
 issues
 1
-10
-10.0
+20
+20.0
 1
 1
 NIL
