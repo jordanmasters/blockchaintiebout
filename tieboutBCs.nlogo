@@ -10,10 +10,14 @@
 
 extensions [ rnd ]
 
-turtles-own [mygroup my-position]
+
 
 breed [groups group]
-;breed [allcs allc]
+breed [parties party]
+
+turtles-own [mygroup my-position dictator]
+parties-own [incumbent]
+
 ;breed [allds alld]
 ;breed [rcs rc]
 
@@ -31,6 +35,7 @@ to setup
   ;label-group-w-party-count
   populate-groups
   populate-parties
+  assign-dictators
   reset-ticks
 end
 
@@ -52,10 +57,26 @@ to go
   ;   check-if-grass-is-greener
   ;   move-to-greener-grass
   ; mutate non-incumbent parties
+  ; 15-shades-of-grey update shade of grey of agents in relation to incumbent position in their jurisdiction
+
+
+
+
   ;calc-group-vote
   ;calc-popular-vote
 ;  die-birth
+  pick-a-party
   tick
+end
+
+to assign-dictators
+  let i 0
+  while [i < olig-count]
+  [
+    show i
+    ask one-of turtles with [mygroup = i and breed != groups and breed != parties] [set dictator 1 show "setting it"]
+    set i i + 1
+  ]
 end
 
 to pick-a-party ; vote on and select the winning party in a jurisdiction based on inst arrangement
@@ -70,6 +91,67 @@ to pick-a-party ; vote on and select the winning party in a jurisdiction based o
     ; parties have to have a bool? of incumbent
     ; set bool 1 to winner, losers 0
     ; coun tmutate non-incumbents here for comp efficientcy....
+  ; for each jurisdiction
+  let i 0
+  while [i < rows * columns]
+  [
+    show "Jurisdiction"
+    ; for each party in each jurisdiction for a given inst arrangement
+
+    ; ok we have to cum join all the iter limits here cause of fixed group ordering
+    ;
+    ; OLIG
+    ; pick a range citizen to the the dictator
+    ; compare that agents score to all parties
+    ; pick the closest
+    let j 0
+    let selected-party []
+    while [i < olig-count]
+    [
+      ; check the dictator position against all the parties
+      ; the one with the lowest difference should be set to incumbent 1
+      ;ask turtles with [mygroup = i and ]
+      let temp []
+      let dict-pos []
+      ask turtles with [mygroup = i and dictator = 1] [set dict-pos my-position]
+      ;lput this instead of show - to list
+      show dict-pos
+      ask turtles with [mygroup = i and breed = parties] [show calculate-citizen-party-distance my-position dict-pos]
+      ;calculate-citizen-party-distance turtles with [mygroup = i and dictator = 1] turtles with
+      set i i + 1
+    ]
+
+    ; DEMREF
+    ; Each agent votes for the party that gives her the highest utility.
+    ; median of votes - this assumes only 2 parties......tell me im wrong....
+    ;
+    ;let j 0
+    while [i <= olig-count + demref-count]
+    [
+      ; run through all agents in the group and compare them to the party
+      ; keep a running tally
+      set i i + 1
+    ]
+
+    ; DIRCOMP
+    ; Each agent votes for the party that gives her the highest utility.
+    ; winning party implements its platform in the jurisdiction
+    ;let j 0
+    while [i <= olig-count + demref-count + dircomp-count]
+    [
+      ; run through all agents in the group and compare them to the party
+      ; keep a running tally
+      set i i + 1
+    ]
+
+        ;
+    ; PROPREP - Do this tomorrow, fuck it!  not need for finishing and running poc sims & analysis...
+    ; This seems like....
+    ; Each agent votes for the party that gives her the highest utility.
+    ; then use this proportion to weighted vote on each invidivual issue
+    ; Their description & code is inconsistent
+  ;set i i + 1
+  ]
 end
 
 ; could use first observed higher value or max after scanning all
@@ -88,19 +170,21 @@ to mutate-non-incumbents
 
 end
 
+
+; used like:
+; set a-pos mutate-position a-pos ; show a-pos ----- for full replacement
 to-report mutate-position [a-position]
   let len length a-position
-  show "len"
-  show len
+;  show "len"
+;  show len
   let rng range len
-  show "rng"
-  show rng
+;  show "rng"
+;  show rng
   let loci one-of rng
-  show "loci"
-  show loci
+;  show "loci"
+;  show loci
   ; do the flipping
   ifelse item loci a-position = 0 [set a-position replace-item loci a-position 1] [set a-position replace-item loci a-position 0]
-
   report a-position
 
 end
@@ -113,29 +197,24 @@ end
 ;end
 
 
-;to draw-votere
-;  ; for all turtles with who greater than m (the number of groups - bs group count take up first m who values)
-;  1 / sqrt n
-;end
-
 to calc-popular-vote
   set popular-vote (sum [my-position] of turtles) / (count turtles - (rows * columns))
 end
 
-to calc-group-vote
-  set groups-positions []
-  let m rows * columns
-  let m-list range m
-  foreach m-list
-  [ group-num -> set groups-positions [my-position] of turtles with [mygroup = group-num];show (word x " -> " round x)
-    ;sum [my-position] of turtles with [mygroup = group-num]
-  ]
-;  show groups-positions
-  set global-vote sum groups-positions / m
-
-
-  ;set my-list fput something my-list
-end
+;to calc-group-vote
+;  set groups-positions []
+;  let m rows * columns
+;  let m-list range m
+;  foreach m-list
+;  [ group-num -> set groups-positions [my-position] of turtles with [mygroup = group-num];show (word x " -> " round x)
+;    ;sum [my-position] of turtles with [mygroup = group-num]
+;  ]
+;;  show groups-positions
+;  set global-vote sum groups-positions / m
+;
+;
+;  ;set my-list fput something my-list
+;end
 
 ;to die-birth
 ;  ask turtles with [who > rows * columns]
@@ -275,7 +354,7 @@ to populate-group [radius n x_cors y_cors mygr]
 ;    if my-position > 0 [set color yellow]
 ;    if my-position < 0 [set color blue]
     ;; this is the hackiest single band-aid which should do fine for the amount of batch runs we are trying to do, but perhaps put one more level of manual recursion to force it if its an issue.
-    if my-position = 0 [set my-position random-float 2 - 1 ]
+    ;if my-position = 0 [set my-position random-float 2 - 1 ]
 
 
 
@@ -354,14 +433,16 @@ to-report calculate-citizen-party-distance [cit-pos party-pos]
   show "running calculate-citizen-party-distance"
   let len length cit-pos
   let i 0
-;  let diff 0
-;  while [i < len]
-;  [
-;    if item i cit-pos = item i party-pos
-;    set diff diff + 1
-;  ]
-;  show diff
-;  report diff
+  let diff 0
+  while [i < len]
+  [
+    if item i cit-pos != item i party-pos [
+      set diff diff + 1
+    ]
+    set i i + 1
+  ]
+  ;show diff
+  report diff
 end
 
 
@@ -378,10 +459,11 @@ to populate-party [radius n x_cors y_cors mygr]
 ;
 ;
 
-  create-ordered-turtles n [
+  create-ordered-parties n [
 
     set size 0.6  ;; easier to see
     set mygroup mygr ;; brand turtle with group label
+    ;set party 1
     setxy x_cors y_cors ;; position at group location
     fd radius
     rt 90
@@ -392,7 +474,7 @@ to populate-party [radius n x_cors y_cors mygr]
       set i i + 1
     ]
 
-    ; set the position for each turtle in a group to unifor between [-1,1] this could be done globally, but for speed of coding...!
+
     ;set my-position random-float 2 - 1
 ;    set vote-prob 1 / sqrt group-count
     set color black
@@ -606,7 +688,7 @@ group-count
 group-count
 1
 50
-25.0
+5.0
 1
 1
 NIL
@@ -773,7 +855,7 @@ demref-party-count
 demref-party-count
 0
 5
-2.0
+5.0
 1
 1
 NIL
@@ -803,7 +885,7 @@ proprep-party-count
 proprep-party-count
 0
 5
-5.0
+0.0
 1
 1
 NIL
@@ -843,7 +925,7 @@ demref-count
 demref-count
 0
 rows * columns - olig-count - dircomp-count - proprep-count
-2.0
+1.0
 1
 1
 NIL
@@ -858,7 +940,7 @@ dircomp-count
 dircomp-count
 0
 rows * columns - olig-count - demref-count - proprep-count
-2.0
+1.0
 1
 1
 NIL
