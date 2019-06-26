@@ -21,8 +21,15 @@ to setup
   populate-groups
   populate-parties
   assign-dictators
+  assign-proprep-incumbent
 
   reset-ticks
+end
+
+to assign-proprep-incumbent
+  ask parties with [color = magenta and who < rows * columns] [set incumbent 1]
+
+
 end
 
 to go
@@ -96,7 +103,7 @@ to pick-a-party ; vote on and select the winning party in a jurisdiction based o
     ; Run through oligarch jurisdictions
     while [i < olig-count]
     [
-      show "Oligarch Jurisdiction"
+      ;show "Oligarch Jurisdiction"
       ; check the dictator position against all the parties
       ; the one with the lowest difference should be set to incumbent 1
       ;ask turtles with [mygroup = i and ]
@@ -104,7 +111,7 @@ to pick-a-party ; vote on and select the winning party in a jurisdiction based o
       let dict-pos []
       ask turtles with [mygroup = i and dictator = 1] [set dict-pos my-position]
       ;lput this instead of show - to list
-      show dict-pos
+      ;show dict-pos
       let dists []
       let dists-whos []
       ask turtles with [mygroup = i and breed = parties] [set dists lput calculate-citizen-party-distance my-position dict-pos dists set dists-whos lput who dists-whos]
@@ -122,7 +129,7 @@ to pick-a-party ; vote on and select the winning party in a jurisdiction based o
         ; did it with one-of - did not work....
         ;  could build this into the setting of the if statement, jump to last ii on completing, why doesn't netlogo have "break"?
         ; in effect this selects the first of the tiebreak options
-        if item ii dists = minval [ask parties with [who = item ii dists-whos] [show minval ask parties with [mygroup = i] [set incumbent 0] set incumbent 1 set ii temp-len]]
+        if item ii dists = minval [ask parties with [who = item ii dists-whos] [ask parties with [mygroup = i] [set incumbent 0] set incumbent 1 set ii temp-len]]
         set ii ii + 1
       ]
       set i i + 1
@@ -137,7 +144,7 @@ to pick-a-party ; vote on and select the winning party in a jurisdiction based o
     ; Run through demref jurisdictions
     while [i < olig-count + demref-count]
     [
-      show "demREF"
+      ;show "demREF"
       ; run through all agents in the group and compare them to the party
       ; keep a running tally
 
@@ -150,13 +157,14 @@ to pick-a-party ; vote on and select the winning party in a jurisdiction based o
         ;
         let loci-votes []
         let loci-mode 0
-        ask turtles with [mygroup = i and breed != parties] [set loci-votes lput item loci my-position loci-votes]
+
+        ask turtles with [mygroup = i and breed != parties and who > rows * columns] [set loci-votes lput item loci my-position loci-votes]
         ;show loci-votes
         ;show one-of modes loci-votes
         set loci loci + 1
         set new-pos lput one-of modes loci-votes new-pos
       ]
-      show new-pos
+      ;show new-pos
       ;ask turtles with [mygroup = i and breed = parties] [set incumbent 0] always only one incumbent
       ask one-of turtles with [mygroup = i and breed = parties] [set my-position new-pos set incumbent 1] ; just one, dont need one-of
 
@@ -170,7 +178,7 @@ to pick-a-party ; vote on and select the winning party in a jurisdiction based o
     ;let j 0
     while [i < olig-count + demref-count + dircomp-count]
     [
-      show "DirComp Jurisdiciton"
+      ;show "DirComp Jurisdiciton"
       ; run through all agents in the group and compare them to one of the two parties
       ; keep a running tally
 ;      let dists []
@@ -178,7 +186,7 @@ to pick-a-party ; vote on and select the winning party in a jurisdiction based o
       let dists-scores []
       let party-who-votes []
       ; highest level loop should be based on citzens in group since we want their votes
-      ask turtles with [mygroup = i and breed != parties] [
+      ask turtles with [mygroup = i and breed != parties and who > rows * columns] [
         ;; loop through parties in a jurisdiction
         let cit-pos my-position
         let parties-whos []
@@ -204,9 +212,9 @@ to pick-a-party ; vote on and select the winning party in a jurisdiction based o
 ;          show calculate-citizen-party-distance my-position dict-pos
 ;        ]
       ]
-      show party-who-votes
+      ;show party-who-votes
       let incumb one-of modes party-who-votes
-      show incumb
+      ;show incumb
       ask parties with [who = incumb] [ask parties with [mygroup = i] [set incumbent 0] set incumbent 1]
       set i i + 1
 
@@ -219,6 +227,33 @@ to pick-a-party ; vote on and select the winning party in a jurisdiction based o
     ; Each agent votes for the party that gives her the highest utility.
     ; then use this proportion to weighted vote on each invidivual issue
     ; Their description & code is inconsistent
+    while [i < olig-count + demref-count + dircomp-count + proprep-count]
+    [
+     show "magenta!"
+      ;; maybe use this procedure for all sets
+     if sum [incumbent] of parties with [mygroup = i and breed = parties] = 0 [
+     ask one-of turtles with [mygroup = i and breed = parties] [set incumbent 1]
+      ] ; just one, dont need one-of
+
+
+
+     ; First do mode voting like in the base of Dircomp
+     ; then use the proportional voting ratios to do referendum voting
+
+
+
+     show i
+     show olig-count + demref-count + dircomp-count + proprep-count
+
+
+
+
+
+     set i i + 1
+
+    ]
+
+
   ;set i i + 1
   ]
 end
@@ -278,9 +313,9 @@ to check-if-grass-is-greener
       ]
     ]
     ;show temp2
-    show "I would switch to..."
-    show better-jurisdictions-for-me
-    show better-diff-for-me
+    ;show "I would switch to..."
+    ;show better-jurisdictions-for-me
+    ;show better-diff-for-me
 
     let pp 0
     let move-to-jur 0
@@ -292,9 +327,9 @@ to check-if-grass-is-greener
       if item pp better-diff-for-me = my-min [set move-to-jur item pp better-jurisdictions-for-me]
       set pp pp + 1
     ]
-    show mygroup
-    show "moving to:"
-    show move-to-jur
+    ;show mygroup
+    ;show "moving to:"
+    ;show move-to-jur
 
     ; use the group we want to move to and get the color of the jurisdiction - by selecting turtle with who < rows * columns
     ; relabel the agent in questions my-group and color!
@@ -302,7 +337,7 @@ to check-if-grass-is-greener
     let new-color color
 
     ; this is stupidly running M number of times for one operation instead of 1 only once.. optimize if time
-    ask turtles with [who < rows * columns and mygroup = move-to-jur] [set new-color color]
+    ask turtles with [who < rows * columns and mygroup = move-to-jur] [set new-color color set mygroup move-to-jur]
     ;show new-color
     set color new-color
 
@@ -621,7 +656,7 @@ rows
 rows
 1
 10
-5.0
+2.0
 1
 1
 NIL
@@ -636,7 +671,7 @@ columns
 columns
 1
 10
-5.0
+2.0
 1
 1
 NIL
@@ -745,15 +780,15 @@ NIL
 1
 
 SLIDER
-1369
-640
-1547
-673
+1620
+641
+1798
+674
 percent-acephalous
 percent-acephalous
 0
 1
-0.01
+0.0
 0.01
 1
 NIL
@@ -784,8 +819,8 @@ SLIDER
 group-count
 group-count
 1
-50
-12.0
+100
+50.0
 1
 1
 NIL
@@ -882,10 +917,10 @@ p q r - Joint Force maxed to 1
 1
 
 PLOT
-1315
-52
-1515
-202
+2110
+77
+2310
+227
 Popular Vote
 NIL
 NIL
@@ -900,10 +935,10 @@ PENS
 "default" 1.0 0 -16777216 true "" "plot popular-vote"
 
 MONITOR
-1520
-47
-1615
-92
+1981
+52
+2076
+97
 NIL
 popular-vote
 17
@@ -911,10 +946,10 @@ popular-vote
 11
 
 PLOT
-1320
-258
-1520
-408
+2116
+282
+2316
+432
 Global Vote
 NIL
 NIL
@@ -937,7 +972,7 @@ olig-party-count
 olig-party-count
 1
 5
-3.0
+2.0
 1
 1
 NIL
@@ -982,7 +1017,7 @@ proprep-party-count
 proprep-party-count
 0
 5
-0.0
+2.0
 1
 1
 NIL
@@ -1007,7 +1042,7 @@ olig-count
 olig-count
 0
 rows * columns - demref-count - dircomp-count - proprep-count
-5.0
+1.0
 1
 1
 NIL
@@ -1022,7 +1057,7 @@ demref-count
 demref-count
 0
 rows * columns - olig-count - dircomp-count - proprep-count
-7.0
+1.0
 1
 1
 NIL
@@ -1037,7 +1072,7 @@ dircomp-count
 dircomp-count
 0
 rows * columns - olig-count - demref-count - proprep-count
-13.0
+1.0
 1
 1
 NIL
@@ -1052,7 +1087,7 @@ proprep-count
 proprep-count
 0
 rows * columns - olig-count - demref-count - dircomp-count
-0.0
+1.0
 1
 1
 NIL
@@ -1103,17 +1138,17 @@ issues
 issues
 1
 20
-7.0
+20.0
 1
 1
 NIL
 HORIZONTAL
 
 PLOT
-1345
-463
-1545
-613
+2140
+488
+2340
+638
 plot 1
 NIL
 NIL
@@ -1126,6 +1161,27 @@ false
 "" ""
 PENS
 "default" 1.0 0 -16777216 true "" "plot count turtles"
+
+PLOT
+32
+266
+360
+595
+Avg Citizens Per Jurisdiction Type
+NIL
+NIL
+0.0
+10.0
+10.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -2674135 true "" "plot count turtles with [color = red] / olig-count"
+"pen-1" 1.0 0 -13345367 true "" "plot count turtles with [color = blue] / demref-count"
+"pen-2" 1.0 0 -1184463 true "" "plot count turtles with [color = yellow] / dircomp-count"
+"pen-3" 1.0 0 -5825686 true "" "plot count turtles with [color = magenta] / proprep-count"
 
 @#$#@#$#@
 ## WHAT IS IT?
