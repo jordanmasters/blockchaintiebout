@@ -119,7 +119,7 @@ to pick-a-party ; vote on and select the winning party in a jurisdiction based o
         ; did it with one-of - did not work....
         ;  could build this into the setting of the if statement, jump to last ii on completing, why doesn't netlogo have "break"?
         ; in effect this selects the first of the tiebreak options
-        if item ii dists = minval [ask parties with [who = item ii dists-whos] [show minval set incumbent 1 set ii temp-len]]
+        if item ii dists = minval [ask parties with [who = item ii dists-whos] [show minval ask parties with [mygroup = i] [set incumbent 0] set incumbent 1 set ii temp-len]]
         set ii ii + 1
       ]
       set i i + 1
@@ -134,7 +134,40 @@ to pick-a-party ; vote on and select the winning party in a jurisdiction based o
     ; Run through demref jurisdictions
     while [i < olig-count + demref-count]
     [
-      show "Dem Ref Jurisdiciton"
+      show "demREF"
+      ; run through all agents in the group and compare them to the party
+      ; keep a running tally
+
+      ; loop through all loci in positions
+      ; loop through all agents in jurisdiction and take mode of their vector of their positions
+      ; append mode to a new list
+      let loci 0
+      let new-pos []
+      while [loci < issues] [
+        ;
+        let loci-votes []
+        let loci-mode 0
+        ask turtles with [mygroup = i and breed != parties] [set loci-votes lput item loci my-position loci-votes]
+        ;show loci-votes
+        ;show one-of modes loci-votes
+        set loci loci + 1
+        set new-pos lput one-of modes loci-votes new-pos
+      ]
+      show new-pos
+      ;ask turtles with [mygroup = i and breed = parties] [set incumbent 0] always only one incumbent
+      ask one-of turtles with [mygroup = i and breed = parties] [set my-position new-pos set incumbent 1] ; just one, dont need one-of
+
+
+      set i i + 1
+    ]
+
+    ; DIRCOMP
+    ; Each agent votes for the party that gives her the highest utility.
+    ; winning party implements its platform in the jurisdiction
+    ;let j 0
+    while [i < olig-count + demref-count + dircomp-count]
+    [
+      show "DirComp Jurisdiciton"
       ; run through all agents in the group and compare them to one of the two parties
       ; keep a running tally
 ;      let dists []
@@ -168,27 +201,14 @@ to pick-a-party ; vote on and select the winning party in a jurisdiction based o
 ;          show calculate-citizen-party-distance my-position dict-pos
 ;        ]
       ]
-      show one-of modes party-who-votes
-
-
-
-
-
-      ;show dists
-      ;show dists-whos
-
+      show party-who-votes
+      let incumb one-of modes party-who-votes
+      show incumb
+      ask parties with [who = incumb] [ask parties with [mygroup = i] [set incumbent 0] set incumbent 1]
       set i i + 1
-    ]
 
-    ; DIRCOMP
-    ; Each agent votes for the party that gives her the highest utility.
-    ; winning party implements its platform in the jurisdiction
-    ;let j 0
-    while [i <= olig-count + demref-count + dircomp-count]
-    [
-      ; run through all agents in the group and compare them to the party
-      ; keep a running tally
-      set i i + 1
+
+
     ]
 
     ; PROPREP - Do this tomorrow, fuck it!  not need for finishing and running poc sims & analysis...
@@ -213,7 +233,7 @@ to mutate-non-incumbents
   let i 0
   while [i < rows * columns]
   [
-    ask parties with [mygroup = i and incumbent = 0] [show "mutated-non-incumbent"]
+    ask parties with [mygroup = i and incumbent = 0] [set my-position mutate-position my-position ] ; show "mutated-non-incumbent"
     set i i + 1
 
   ]
@@ -523,7 +543,7 @@ columns
 columns
 1
 10
-2.0
+3.0
 1
 1
 NIL
@@ -672,7 +692,7 @@ group-count
 group-count
 1
 50
-4.0
+11.0
 1
 1
 NIL
@@ -837,9 +857,9 @@ SLIDER
 308
 demref-party-count
 demref-party-count
-2
-2
-3.0
+1
+1
+1.0
 1
 1
 NIL
@@ -854,7 +874,7 @@ dircomp-party-count
 dircomp-party-count
 0
 5
-5.0
+2.0
 1
 1
 NIL
@@ -894,7 +914,7 @@ olig-count
 olig-count
 0
 rows * columns - demref-count - dircomp-count - proprep-count
-3.0
+7.0
 1
 1
 NIL
@@ -909,7 +929,7 @@ demref-count
 demref-count
 0
 rows * columns - olig-count - dircomp-count - proprep-count
-3.0
+1.0
 1
 1
 NIL
@@ -924,7 +944,7 @@ dircomp-count
 dircomp-count
 0
 rows * columns - olig-count - demref-count - proprep-count
-0.0
+1.0
 1
 1
 NIL
@@ -995,6 +1015,24 @@ issues
 1
 NIL
 HORIZONTAL
+
+PLOT
+1345
+463
+1545
+613
+plot 1
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "plot count turtles"
 
 @#$#@#$#@
 ## WHAT IS IT?
