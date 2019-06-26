@@ -231,6 +231,9 @@ to check-if-grass-is-greener
   ; ask citizen turtles to look at each other incument group, do the dist comp
   ; and if it is lower than theirs in their group, replace the value of the will-move-to var with that
   ask turtles with [who >= rows * columns and breed != parties] [
+;    show " "
+;    show "TURTLE:"
+    ;show who
     let mygroup-temp mygroup
     let my-position-temp my-position
     let best-alt mygroup
@@ -269,7 +272,7 @@ to check-if-grass-is-greener
       set my-group-diff calculate-citizen-party-distance my-position-temp my-position
       ;show my-group-diff
       ;set temp2 temp2 + 1
-      if my-status < my-group-diff [
+      if my-status > my-group-diff [
         set better-jurisdictions-for-me lput mygroup better-jurisdictions-for-me
         set better-diff-for-me lput my-group-diff better-diff-for-me
       ]
@@ -289,12 +292,19 @@ to check-if-grass-is-greener
       if item pp better-diff-for-me = my-min [set move-to-jur item pp better-jurisdictions-for-me]
       set pp pp + 1
     ]
+    show mygroup
     show "moving to:"
     show move-to-jur
 
-    ; use the group we want to kove to and get the color of th ejurisdiction - by selecting turtle with who < rows * columns
+    ; use the group we want to move to and get the color of the jurisdiction - by selecting turtle with who < rows * columns
     ; relabel the agent in questions my-group and color!
 
+    let new-color color
+
+    ; this is stupidly running M number of times for one operation instead of 1 only once.. optimize if time
+    ask turtles with [who < rows * columns and mygroup = move-to-jur] [set new-color color]
+    ;show new-color
+    set color new-color
 
   ]
 
@@ -611,7 +621,7 @@ rows
 rows
 1
 10
-3.0
+5.0
 1
 1
 NIL
@@ -626,7 +636,7 @@ columns
 columns
 1
 10
-3.0
+5.0
 1
 1
 NIL
@@ -775,7 +785,7 @@ group-count
 group-count
 1
 50
-16.0
+12.0
 1
 1
 NIL
@@ -997,7 +1007,7 @@ olig-count
 olig-count
 0
 rows * columns - demref-count - dircomp-count - proprep-count
-7.0
+5.0
 1
 1
 NIL
@@ -1012,7 +1022,7 @@ demref-count
 demref-count
 0
 rows * columns - olig-count - dircomp-count - proprep-count
-1.0
+7.0
 1
 1
 NIL
@@ -1027,7 +1037,7 @@ dircomp-count
 dircomp-count
 0
 rows * columns - olig-count - demref-count - proprep-count
-1.0
+13.0
 1
 1
 NIL
