@@ -47,6 +47,9 @@ to go
   ;calc-popular-vote
   ;die-birth
   pick-a-party
+  check-if-grass-is-greener
+
+
   mutate-non-incumbents
   tick
 end
@@ -224,6 +227,82 @@ end
 to check-if-grass-is-greener
   ; for each agent, loop through all incumbent positions and make a list of the compared values
   ; take the index of the highest value and move (die->ressurect) the agent to that group
+
+  ; ask citizen turtles to look at each other incument group, do the dist comp
+  ; and if it is lower than theirs in their group, replace the value of the will-move-to var with that
+  ask turtles with [who >= rows * columns and breed != parties] [
+    let mygroup-temp mygroup
+    let my-position-temp my-position
+    let best-alt mygroup
+    let my-group-diff 0
+    ;ask parties with [mygroup = mygroup-temp and incumbent = 1] [set my-group-pos my-position]
+    ;let diff calculate-citizen-party-distance my-position my-group-pos
+    ;show "my-pos vs my-pos-group"
+    ;show diff
+    let better-jurisdictions-for-me []
+    let better-diff-for-me []
+    ; get the current different from given agent to its incumbent in its group
+    ;let temp1 0
+    let my-status 0
+    ask parties with [mygroup = mygroup-temp and incumbent = 1]
+    [
+      ;show "vs my incumbent"
+      ;show who
+      set my-group-diff calculate-citizen-party-distance my-position-temp my-position
+;      show my-group-diff
+      ;set temp1 temp1 + 1
+      set my-status my-group-diff
+      set better-jurisdictions-for-me lput mygroup better-jurisdictions-for-me
+      set better-diff-for-me lput my-group-diff better-diff-for-me
+    ]
+    ;show temp1
+
+
+    ; Check all other incumbents parties
+    ;let temp2 0
+    ;let better-jurisdictions-for-me []
+    ;let better-diff-for-me []
+    ask parties with [mygroup != mygroup-temp and incumbent = 1]
+    [
+      ;show "grass is greener"
+      ;show who
+      set my-group-diff calculate-citizen-party-distance my-position-temp my-position
+      ;show my-group-diff
+      ;set temp2 temp2 + 1
+      if my-status < my-group-diff [
+        set better-jurisdictions-for-me lput mygroup better-jurisdictions-for-me
+        set better-diff-for-me lput my-group-diff better-diff-for-me
+      ]
+    ]
+    ;show temp2
+    show "I would switch to..."
+    show better-jurisdictions-for-me
+    show better-diff-for-me
+
+    let pp 0
+    let move-to-jur 0
+    ; ERROR Can't find the minimum of a list with no numbers: []
+    ; this could be fixed by just always applying your own group to the possible places to move to...
+    ; this worked
+    let my-min min better-diff-for-me
+    while [pp < length better-diff-for-me] [
+      if item pp better-diff-for-me = my-min [set move-to-jur item pp better-jurisdictions-for-me]
+      set pp pp + 1
+    ]
+    show "moving to:"
+    show move-to-jur
+
+    ; use the group we want to kove to and get the color of th ejurisdiction - by selecting turtle with who < rows * columns
+    ; relabel the agent in questions my-group and color!
+
+
+  ]
+
+
+
+  ; at the end of each run through the jurisdictions, move the turtle to its best option (move can be only in group label, and not visually or spacially.... do this first -
+  ; this may actually just be better in general, less computationally intesne, and no overhead at all)
+  ;
 end
 
 to mutate-non-incumbents
@@ -370,7 +449,11 @@ to populate-group [radius n x_cors y_cors mygr]
     ; set the position for each turtle in a group to unifor between [-1,1] this could be done globally, but for speed of coding...!
     ;set my-position random-float 2 - 1
 ;    set vote-prob 1 / sqrt group-count
-    set color grey
+
+    if mygr < olig-count [set color red]
+    if mygr >= olig-count and mygr < olig-count + demref-count [set color blue]
+    if mygr >= olig-count + demref-count and mygr < olig-count + demref-count + dircomp-count  [set color yellow]
+    if mygr >= olig-count + demref-count + dircomp-count [set color magenta]
 ;    if my-position > 0 [set color yellow]
 ;    if my-position < 0 [set color blue]
     ;; this is the hackiest single band-aid which should do fine for the amount of batch runs we are trying to do, but perhaps put one more level of manual recursion to force it if its an issue.
@@ -692,7 +775,7 @@ group-count
 group-count
 1
 50
-11.0
+16.0
 1
 1
 NIL
